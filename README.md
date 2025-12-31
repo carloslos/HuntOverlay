@@ -18,7 +18,7 @@ Always comply with the game’s terms of service.
 
 ## Special Thanks
 
-- Kamille for providing POI data.
+- Kamille (https://github.com/waibcam), and his amazing discord community for providing the POI data.
 
 
 ---
