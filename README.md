@@ -20,7 +20,7 @@ Always comply with the game’s terms of service.
 
 ## Special Thanks
 
-- Kamille for providing and maintaining the POI data.
+- Kamille for providing POI data.
 
 
 ---
