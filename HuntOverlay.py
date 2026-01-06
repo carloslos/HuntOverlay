@@ -898,7 +898,7 @@ class Overlay(QtWidgets.QWidget):
         # Start minimized to tray if enabled, silently
         if self.minimize_to_tray:
             QtCore.QTimer.singleShot(0, lambda: self._hide_panel_to_tray(silent=True))
-s
+
         # System tray setup.
         self.tray = None
         self._ensure_tray()
