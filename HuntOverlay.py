@@ -895,10 +895,10 @@ class Overlay(QtWidgets.QWidget):
         self.panel.move(40, 40)
         self.panel.show()
 
-        # Start minimized to tray if enabled
+        # Start minimized to tray if enabled, silently
         if self.minimize_to_tray:
-            QtCore.QTimer.singleShot(0, self._hide_panel_to_tray)
-
+            QtCore.QTimer.singleShot(0, lambda: self._hide_panel_to_tray(silent=True))
+s
         # System tray setup.
         self.tray = None
         self._ensure_tray()
@@ -973,14 +973,15 @@ class Overlay(QtWidgets.QWidget):
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
             self._restore_panel_from_tray()
 
-    def _hide_panel_to_tray(self):
+    def _hide_panel_to_tray(self, silent=False):
         self._ensure_tray()
         self.panel.hide()
         self.panel.setWindowState(QtCore.Qt.WindowNoState)
-        try:
-            self.tray.showMessage("HuntOverlay", "Panel minimized to tray", QtWidgets.QSystemTrayIcon.Information, 1500)
-        except:
-            pass
+        if not silent:
+            try:
+                self.tray.showMessage("HuntOverlay", "Panel minimized to tray", QtWidgets.QSystemTrayIcon.Information, 1500)
+            except:
+                pass
 
     def _restore_panel_from_tray(self):
         self.panel.showNormal()
