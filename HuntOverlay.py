@@ -895,6 +895,10 @@ class Overlay(QtWidgets.QWidget):
         self.panel.move(40, 40)
         self.panel.show()
 
+        # Start minimized to tray if enabled
+        if self.minimize_to_tray:
+            QtCore.QTimer.singleShot(0, self._hide_panel_to_tray)
+
         # System tray setup.
         self.tray = None
         self._ensure_tray()
@@ -1114,6 +1118,10 @@ class Overlay(QtWidgets.QWidget):
         except:
             return False
         if vk == 0:
+            return False
+
+        # 🔒 Block Alt+Tab explicitly
+        if vk == VK_TAB and key(VK_MENU):
             return False
 
         if name == "hide_hovered":
