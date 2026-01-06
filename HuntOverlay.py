@@ -1121,7 +1121,7 @@ class Overlay(QtWidgets.QWidget):
         if vk == 0:
             return False
 
-        # 🔒 Block Alt+Tab explicitly
+        # Ignore Tab if Alt is pressed
         if vk == VK_TAB and key(VK_MENU):
             return False
 
