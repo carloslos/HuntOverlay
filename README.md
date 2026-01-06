@@ -1,3 +1,10 @@
+Changed 2 things from original code:
+- When alt+tabbing, the tab will be ignored and will not open the overlay
+- Program will start minimized to system tray
+  
+
+Original ReadMe:
+
 # Hunt Map Overlay by sKhaled
 
 A lightweight, real time Windows overlay for Hunt: Showdown that displays map POIs directly on screen.  
