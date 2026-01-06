@@ -814,6 +814,10 @@ class Panel(QtWidgets.QWidget):
 class Overlay(QtWidgets.QWidget):
     def __init__(self):
         super().__init__(None, QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.Tool)
+
+        # Track if Tab was pressed while Alt was held
+        self.alt_tab_blocked = False
+        
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
         self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating, True)
         self.setFocusPolicy(QtCore.Qt.NoFocus)
@@ -1121,9 +1125,18 @@ class Overlay(QtWidgets.QWidget):
         if vk == 0:
             return False
 
-        # Ignore Tab if Alt is pressed
-        if vk == VK_TAB and key(VK_MENU):
-            return False
+        # Handle Alt+Tab suppression
+        if vk == VK_TAB:
+            if key(VK_MENU):
+                # Alt is down → block this Tab press
+                self.alt_tab_blocked = True
+                return False
+            elif self.alt_tab_blocked:
+                # Alt was pressed when Tab was first pressed → still block until Tab is released
+                if not key(VK_TAB):
+                    # Tab released → reset flag
+                    self.alt_tab_blocked = False
+                return False
 
         if name == "hide_hovered":
             need_ctrl = bool(b.get("ctrl", True))
