@@ -1125,7 +1125,7 @@ class Overlay(QtWidgets.QWidget):
 
         # Suppress Tab when used with Alt, Ctrl, or Shift
         if vk == VK_TAB:
-            modifier_down = key(VK_MENU) or key(VK_CONTROL) or key(VK_SHIFT)
+            modifier_down = key(VK_MENU) or key(VK_CONTROL)
 
             if modifier_down:
                 # Tab pressed with a modifier → block until Tab is released
