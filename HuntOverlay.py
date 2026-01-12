@@ -820,7 +820,6 @@ class Overlay(QtWidgets.QWidget):
         self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating, True)
         self.setFocusPolicy(QtCore.Qt.NoFocus)
         self.setMouseTracking(False)
-        self.showFullScreen()
 
         if ICON:
             QtWidgets.QApplication.instance().setWindowIcon(QtGui.QIcon(ICON))
@@ -905,6 +904,9 @@ class Overlay(QtWidgets.QWidget):
         self.tray = None
         self._ensure_tray()
 
+        # Move to main monitor
+        self._move_to_primary_screen()
+
         # Make overlay click through and topmost.
         click_through(int(self.winId()))
         (self.show if self.visible and self.master else self.hide)()
@@ -934,6 +936,12 @@ class Overlay(QtWidgets.QWidget):
 
         # Minimize to tray needs access to the panel state changes.
         self.panel.installEventFilter(self)
+
+    def _move_to_primary_screen(self):
+        screen = QtGui.QGuiApplication.primaryScreen()
+        geom = screen.geometry()
+
+        self.setGeometry(geom)
 
     def eventFilter(self, obj, ev):
         if obj is self.panel:
