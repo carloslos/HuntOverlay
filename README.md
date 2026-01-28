@@ -1,7 +1,7 @@
-Changed 2 things from original code:
-- When alt+tabbing, the tab will be ignored and will not open the overlay
+Changes made:
+- When alt+tabbing or control+tabbing, the tab will be ignored and will not open the overlay
 - Program will start minimized to system tray
-  
+- Always open overlay on the main monitor
 
 Original ReadMe:
 
