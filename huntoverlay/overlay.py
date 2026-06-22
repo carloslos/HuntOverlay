@@ -23,7 +23,7 @@ from .constants import (
     VK_CONTROL,
     VK_MENU,
 )
-from .win32 import key, topmost, click_through
+from .win32 import key, topmost, click_through, foreground_process_name
 from .paths import ICON, DATA_PATH, STYLE_PATH, CONFIG_PATH, udir, load_json, save_json
 from .helpers import (
     q2rgb,
@@ -369,6 +369,13 @@ class Overlay(QtWidgets.QWidget):
         self.rect = None
         self._apply_rect()
 
+    def _hunt_in_focus(self) -> bool:
+        """
+        True when the foreground window belongs to the Hunt game process.
+        Only called on a key-press edge, so the cost is negligible.
+        """
+        return foreground_process_name() == "huntgame"
+
     def _bind_pressed(self, name: str) -> bool:
         b = self.binds.get(name, {})
         try:
@@ -593,7 +600,7 @@ class Overlay(QtWidgets.QWidget):
         self.p_toggle_master = nm
 
         nh = self._bind_pressed("hide_overlay")
-        if nh and not self.p_hide and self.visible:
+        if nh and not self.p_hide and self.visible and self._hunt_in_focus():
             self.visible = False
             self.hide()
             self._save()
@@ -603,7 +610,7 @@ class Overlay(QtWidgets.QWidget):
             return
 
         nt = self._bind_pressed("toggle_overlay")
-        if nt and not self.p_toggle_overlay:
+        if nt and not self.p_toggle_overlay and self._hunt_in_focus():
             self.visible = not self.visible
             (self.show if self.visible else self.hide)()
             if self.visible:
@@ -620,7 +627,7 @@ class Overlay(QtWidgets.QWidget):
 
         # Auto-detect the current map from the screen.
         nd = self._bind_pressed("detect_map")
-        if nd and not self.p_detect_map:
+        if nd and not self.p_detect_map and self._hunt_in_focus():
             self._detect_and_switch_map()
         self.p_detect_map = nd
 
