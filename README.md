@@ -150,7 +150,7 @@ pip install pyside6
 
 Run:
 
-python HuntOverlay.py
+python main.py
 
 ---
 
@@ -158,7 +158,7 @@ python HuntOverlay.py
 
 To build a single file Windows executable:
 
-py -m PyInstaller --noconfirm --onefile --windowed --name HuntOverlay --icon myicon.ico --add-data "data.json;." --add-data "poiData.json;." --add-data "myicon.ico;." HuntOverlay.py
+py -m PyInstaller --noconfirm --onefile --windowed --name HuntOverlay --icon myicon.ico --add-data "data.json;." --add-data "poiData.json;." --add-data "myicon.ico;." main.py
 
 The output will be located in:
 

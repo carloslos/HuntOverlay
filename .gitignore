@@ -15,3 +15,30 @@ build/HuntOverlay/base_library.zip
 build/HuntOverlay/Analysis-00.toc
 build/HuntOverlay/EXE-00.toc
 build args.txt
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# PyInstaller
+*.spec
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE / editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
