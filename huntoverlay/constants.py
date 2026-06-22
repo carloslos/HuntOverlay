@@ -12,6 +12,7 @@ CONFIG_VERSION = "1.0.1"
 # Win32 virtual key codes used by defaults and modifier detection.
 VK_TAB = 0x09
 VK_H = 0x48
+VK_O = 0x4F
 VK_BT = 0xC0
 VK1, VK2, VK3, VK4 = 0x31, 0x32, 0x33, 0x34
 

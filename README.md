@@ -2,6 +2,7 @@ Changes made:
 - When alt+tabbing or control+tabbing, the tab will be ignored and will not open the overlay
 - Program will start minimized to system tray
 - Always open overlay on the main monitor
+- Map detection
 
 Original ReadMe:
 
@@ -95,13 +96,8 @@ Hide overlay
 1 2 3 4  
 Switch maps if enabled in the control panel
 
-Ctrl + Alt + Shift + Delete  
-Hide the POI currently under the mouse
-
-This is a soft hide.  
-It only hides the POI for the category it was hidden from.  
-It does not delete data from JSON files.  
-Hidden state is saved in configuration.
+O  
+Auto-detect the map currently on screen and switch to it
 
 
 ## Control Panel
@@ -113,7 +109,7 @@ The control panel allows you to:
 - Switch maps manually
 - Enable numeric map switching
 - Adjust global POI size scale
-- View hotkey instructions
+- Change keybinds (shown next to each action)
 
 The panel stays on top and does not interfere with gameplay.
 
@@ -158,7 +154,7 @@ python main.py
 
 To build a single file Windows executable:
 
-py -m PyInstaller --noconfirm --onefile --windowed --name HuntOverlay --icon myicon.ico --add-data "data.json;." --add-data "poiData.json;." --add-data "myicon.ico;." main.py
+py -m PyInstaller --noconfirm --onefile --windowed --name HuntOverlay --icon myicon.ico --add-data "data.json;." --add-data "poiData.json;." --add-data "myicon.ico;." --add-data "maps;maps" main.py
 
 The output will be located in:
 

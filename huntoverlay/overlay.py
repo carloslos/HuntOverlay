@@ -10,7 +10,7 @@
 #   toggle_overlay       Tab
 #   hide_overlay         H
 #   map_1..map_4         1 2 3 4
-#   hide_hovered         Ctrl Alt Shift Delete
+#   detect_map           O
 import sys, os, traceback
 
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -20,7 +20,6 @@ from .constants import (
     CONFIG_VERSION,
     DEFAULT_HIDDEN_POSSIBLE_XP,
     VK_TAB,
-    VK_SHIFT,
     VK_CONTROL,
     VK_MENU,
 )
@@ -49,6 +48,7 @@ from .config import (
 )
 from .widgets import KeyCaptureDialog
 from .panel import Panel
+from .mapdetect import MapMatcher, MATCH_THRESHOLD
 
 
 class Overlay(QtWidgets.QWidget):
@@ -78,6 +78,20 @@ class Overlay(QtWidgets.QWidget):
 
         self.poi_style = load_json(STYLE_PATH)
 
+        # Map name lookup keyed by data.json index, used by the image matcher.
+        # Reference images live in maps/<index>.webp.
+        index_to_name = {}
+        for m in self.game_data:
+            if isinstance(m, dict) and "i" in m and "n" in m:
+                try:
+                    index_to_name[int(m["i"])] = str(m["n"])
+                except:
+                    pass
+        if not index_to_name:
+            # Fall back to MAPS order with 1 based image indices.
+            index_to_name = {i + 1: MAPS[i] for i in range(len(MAPS))}
+        self.map_matcher = MapMatcher(index_to_name)
+
         # Order of types controls draw order and GUI ordering.
         self.type_order = [
             "possible_xp",
@@ -106,14 +120,15 @@ class Overlay(QtWidgets.QWidget):
             "toggle_master": "Toggle master",
             "toggle_overlay": "Toggle overlay",
             "hide_overlay": "Hide overlay",
+            "detect_map": "Auto-detect map",
             "map_1": "Map 1  Stillwater",
             "map_2": "Map 2  Lawson",
             "map_3": "Map 3  DeSalle",
             "map_4": "Map 4  Mammon",
-            "hide_hovered": "Hide hovered POI",
         }
+        binds_value_map = {a: self._bind_label(a) for a in binds_label_map}
         help_text = self._build_help_text()
-        self.panel = Panel(self.type_order, self.type_specs, self.global_scale, help_text, binds_label_map, self.minimize_to_tray)
+        self.panel = Panel(self.type_order, self.type_specs, self.global_scale, help_text, binds_label_map, binds_value_map, self.minimize_to_tray)
         if ICON:
             self.panel.setWindowIcon(QtGui.QIcon(ICON))
 
@@ -157,11 +172,7 @@ class Overlay(QtWidgets.QWidget):
         self.p_toggle_master = False
         self.p_hide = False
         self.p_toggle_overlay = False
-        self.p_hide_hovered = False
-
-        # Hover state is computed each tick when visible.
-        self.hover = None
-        self.hover_radius = 10
+        self.p_detect_map = False
 
         # Cache computed point lists per map to avoid rebuilding every frame.
         self.cache = {}
@@ -170,7 +181,7 @@ class Overlay(QtWidgets.QWidget):
         # Save once at the end to ensure config contains any missing keys we added.
         self._save()
 
-        # Timer tick drives input polling and hover updates.
+        # Timer tick drives input polling.
         self.t = QtCore.QTimer(self)
         self.t.timeout.connect(self._tick_safe)
         self.t.start(16)
@@ -298,11 +309,6 @@ class Overlay(QtWidgets.QWidget):
             except:
                 v["vk"] = int(base[k]["vk"])
 
-            if k == "hide_hovered":
-                v["ctrl"] = bool(v.get("ctrl", True))
-                v["alt"] = bool(v.get("alt", True))
-                v["shift"] = bool(v.get("shift", True))
-
         return merged
 
     def _load_state_from_config(self, d: dict):
@@ -388,15 +394,6 @@ class Overlay(QtWidgets.QWidget):
                     self.tab_blocked = False
                 return False
 
-        if name == "hide_hovered":
-            need_ctrl = bool(b.get("ctrl", True))
-            need_alt = bool(b.get("alt", True))
-            need_shift = bool(b.get("shift", True))
-            if need_ctrl and not key(VK_CONTROL): return False
-            if need_alt and not key(VK_MENU): return False
-            if need_shift and not key(VK_SHIFT): return False
-            return key(vk)
-
         return key(vk)
 
     def _bind_label(self, name: str) -> str:
@@ -406,24 +403,10 @@ class Overlay(QtWidgets.QWidget):
         except:
             vk = 0
 
-        if name == "hide_hovered":
-            parts = []
-            if bool(b.get("ctrl", True)): parts.append("Ctrl")
-            if bool(b.get("alt", True)): parts.append("Alt")
-            if bool(b.get("shift", True)): parts.append("Shift")
-            parts.append(vk_to_label(vk))
-            return " + ".join(parts)
-
         return vk_to_label(vk)
 
     def _build_help_text(self) -> str:
         return (
-            f"{self._bind_label('toggle_master'):12s} Toggle master on or off\n"
-            f"{self._bind_label('toggle_overlay'):12s} Show or hide overlay\n"
-            f"{self._bind_label('hide_overlay'):12s} Hide overlay\n"
-            f"{vk_to_label(self.binds['map_1']['vk'])} {vk_to_label(self.binds['map_2']['vk'])} {vk_to_label(self.binds['map_3']['vk'])} {vk_to_label(self.binds['map_4']['vk'])}      Switch map (if enabled)\n"
-            f"{self._bind_label('hide_hovered')}   Hide hovered POI for current category only\n"
-            "\n"
             f"Detected aspect: {self.aspect}\n"
             f"Config version: {self.data.get('version','?')}\n"
             "Files are stored at:\n"
@@ -523,6 +506,8 @@ class Overlay(QtWidgets.QWidget):
 
         # Refresh help text because keybinds and aspect might differ.
         self.panel.setHelpText(self._build_help_text())
+        for a in self.panel.kb_rows:
+            self.panel.setBindLabel(a, self._bind_label(a))
 
         # Apply overlay visibility state.
         (self.show if self.visible and self.master else self.hide)()
@@ -591,48 +576,6 @@ class Overlay(QtWidgets.QWidget):
     def _is_hidden(self, tkey: str, pt: dict) -> bool:
         return self._hidden_key(tkey, pt) in self.hidden_sets.get(tkey, set())
 
-    def _hide_hovered(self):
-        if self.hover is None:
-            return
-        tkey = self.hover["type"]
-        pt = self.hover["pt_ref"]
-        hk = self._hidden_key(tkey, pt)
-        self.hidden_sets.setdefault(tkey, set()).add(hk)
-        self._save()
-        self.hover = None
-        self.update()
-
-    def _update_hover(self):
-        self.hover = None
-        if not (self.master and self.visible and self.rect):
-            return
-
-        gp = QtGui.QCursor.pos()
-        lp = self.mapFromGlobal(gp)
-        mx, my = float(lp.x()), float(lp.y())
-
-        pts_by_type = self.cache.get(self.prof, {})
-        best = None
-        best_d2 = float(self.hover_radius * self.hover_radius)
-
-        for tkey in self.type_order:
-            if not self.types.get(tkey, {}).get("enabled", True):
-                continue
-
-            for idx, pt in enumerate(pts_by_type.get(tkey, [])):
-                if self._is_hidden(tkey, pt):
-                    continue
-                cx = self.rect.left() + pt["u"] * self.rect.width()
-                cy = self.rect.top() + pt["v"] * self.rect.height()
-                dx = mx - cx
-                dy = my - cy
-                d2 = dx * dx + dy * dy
-                if d2 <= best_d2:
-                    best_d2 = d2
-                    best = {"map": self.prof, "type": tkey, "index": idx, "pt_ref": pt}
-
-        self.hover = best
-
     def _tick_safe(self):
         try:
             self._tick()
@@ -675,21 +618,85 @@ class Overlay(QtWidgets.QWidget):
             elif self._bind_pressed("map_3"): self.switch(MAPS[2])
             elif self._bind_pressed("map_4"): self.switch(MAPS[3])
 
-        if self.visible:
-            self._update_hover()
-
-        hide_now = self._bind_pressed("hide_hovered")
-        if hide_now and not self.p_hide_hovered:
-            self._hide_hovered()
-        self.p_hide_hovered = hide_now
+        # Auto-detect the current map from the screen.
+        nd = self._bind_pressed("detect_map")
+        if nd and not self.p_detect_map:
+            self._detect_and_switch_map()
+        self.p_detect_map = nd
 
         self.update()
+
+    def _grab_map_region(self):
+        """
+        Captures the on screen pixels under the overlay rectangle.
+        The overlay is hidden for the grab so its POI dots do not pollute the image.
+        Returns a QImage or None.
+        """
+        if not self.rect:
+            return None
+        screen = QtGui.QGuiApplication.primaryScreen()
+        if screen is None:
+            return None
+
+        g = screen.geometry()
+        x = g.left() + self.rect.left()
+        y = g.top() + self.rect.top()
+        w = self.rect.width()
+        h = self.rect.height()
+
+        was_visible = self.isVisible()
+        if was_visible:
+            self.hide()
+            QtWidgets.QApplication.processEvents()
+
+        pix = screen.grabWindow(0, x, y, w, h)
+
+        if was_visible:
+            self.show()
+            click_through(int(self.winId()))
+            topmost(int(self.winId()))
+            QtWidgets.QApplication.processEvents()
+
+        if pix is None or pix.isNull():
+            return None
+        return pix.toImage()
+
+    def _detect_and_switch_map(self):
+        """
+        Grabs the map region, matches it against the reference map images and
+        switches to the best match. Reports the result via the tray icon.
+        """
+        if not self.map_matcher.available():
+            self._notify("Auto-detect map", "No reference map images found in maps folder")
+            return
+
+        region = self._grab_map_region()
+        name, score = self.map_matcher.detect(region)
+        if not name:
+            self._notify("Auto-detect map", "Could not capture the screen")
+            return
+
+        if score >= MATCH_THRESHOLD:
+            self.switch(name)
+            self._notify("Auto-detect map", f"Switched to {name}  (match {score:.2f})")
+        else:
+            # Low confidence: still switch to the best guess but flag it.
+            self.switch(name)
+            self._notify("Auto-detect map", f"Best guess {name}  (low confidence {score:.2f})")
+
+    def _notify(self, title: str, message: str):
+        if self.tray is not None:
+            try:
+                self.tray.showMessage(title, message, QtWidgets.QSystemTrayIcon.Information, 1800)
+                return
+            except:
+                pass
+        print(f"{title}: {message}", flush=True)
 
     def _edit_keybind(self, action: str):
         """
         GUI initiated keybind edit.
-        Captures next key press plus modifiers.
-        Modifiers are only applied to hide_hovered by design.
+        Captures the next key press and stores it for the action.
         """
         d = KeyCaptureDialog(action, self.panel)
         if ICON:
@@ -704,13 +711,8 @@ class Overlay(QtWidgets.QWidget):
 
         self.binds[action]["vk"] = int(b.get("vk", self.binds[action]["vk"]))
 
-        if action == "hide_hovered":
-            self.binds[action]["ctrl"] = bool(b.get("ctrl", True))
-            self.binds[action]["alt"] = bool(b.get("alt", True))
-            self.binds[action]["shift"] = bool(b.get("shift", True))
-
         self._save()
-        self.panel.setHelpText(self._build_help_text())
+        self.panel.setBindLabel(action, self._bind_label(action))
 
     def paintEvent(self, _):
         if not (self.master and self.visible and self.rect):

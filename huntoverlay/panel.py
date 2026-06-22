@@ -17,10 +17,10 @@ class Panel(QtWidgets.QWidget):
     resetConfig = QtCore.Signal()
     minimizeToTrayChanged = QtCore.Signal(bool)
 
-    def __init__(self, type_order, type_specs, start_scale: float, help_text: str, binds_label_map: dict, start_min_to_tray: bool, p=None):
+    def __init__(self, type_order, type_specs, start_scale: float, help_text: str, binds_label_map: dict, binds_value_map: dict, start_min_to_tray: bool, p=None):
         super().__init__(p, QtCore.Qt.Window | QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle("Hunt Map Overlay By sKhaled")
-        self.setFixedWidth(360)
+        self.setFixedWidth(720)
         self.setStyleSheet(
             "QWidget{background:#1e1f22;color:#e6e6e6;}"
             "QComboBox,QLineEdit,QSpinBox,QDoubleSpinBox{background:#2b2d30;color:#e6e6e6;border:1px solid #3a3c40;}"
@@ -32,7 +32,19 @@ class Panel(QtWidgets.QWidget):
         )
 
         self.type_widgets = {}
-        v = QtWidgets.QVBoxLayout(self)
+
+        # Two column layout. Left column holds POI types through keybinds,
+        # the right column holds everything below the keybinds section.
+        root = QtWidgets.QHBoxLayout(self)
+        v = QtWidgets.QVBoxLayout()
+        v2 = QtWidgets.QVBoxLayout()
+        sep = QtWidgets.QFrame()
+        sep.setFrameShape(QtWidgets.QFrame.VLine)
+        sep.setFrameShadow(QtWidgets.QFrame.Sunken)
+        sep.setStyleSheet("color:#2b2d30;background:#2b2d30;max-width:1px;")
+        root.addLayout(v, 1)
+        root.addWidget(sep)
+        root.addLayout(v2, 1)
 
         title = QtWidgets.QLabel("POI Types")
         f = title.font()
@@ -101,50 +113,56 @@ class Panel(QtWidgets.QWidget):
         v.addWidget(self.btn_def_colors)
         self.btn_def_colors.clicked.connect(self.resetColors)
 
-        v.addSpacing(8)
+        v.addStretch(1)
 
         kb_title = QtWidgets.QLabel("Keybinds")
         f2 = kb_title.font()
         f2.setBold(True)
         kb_title.setFont(f2)
-        v.addWidget(kb_title)
+        v2.addWidget(kb_title)
 
         self.kb_rows = {}
+        self.kb_value_labels = {}
         for action, label in binds_label_map.items():
             row = QtWidgets.QHBoxLayout()
             row.addWidget(QtWidgets.QLabel(label))
             row.addStretch(1)
+            value = QtWidgets.QLabel(str(binds_value_map.get(action, "")))
+            value.setStyleSheet("color:#9aa0ff;")
+            value.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            row.addWidget(value)
             btn = QtWidgets.QPushButton("Set")
             btn.setFixedWidth(60)
             row.addWidget(btn)
-            v.addLayout(row)
+            v2.addLayout(row)
             self.kb_rows[action] = btn
+            self.kb_value_labels[action] = value
             btn.clicked.connect(lambda _, a=action: self.requestBindEdit.emit(a))
 
-        v.addSpacing(8)
+        v2.addSpacing(8)
 
         self.chk_tray = QtWidgets.QCheckBox("Minimize to system tray")
         self.chk_tray.setChecked(bool(start_min_to_tray))
-        v.addWidget(self.chk_tray)
+        v2.addWidget(self.chk_tray)
         self.chk_tray.toggled.connect(lambda b: self.minimizeToTrayChanged.emit(bool(b)))
 
-        v.addSpacing(6)
+        v2.addSpacing(6)
 
         self.btn_reset_cfg = QtWidgets.QPushButton("Reset to Default Config")
-        v.addWidget(self.btn_reset_cfg)
+        v2.addWidget(self.btn_reset_cfg)
         self.btn_reset_cfg.clicked.connect(self.resetConfig)
 
-        v.addSpacing(8)
+        v2.addSpacing(8)
 
-        v.addWidget(QtWidgets.QLabel("Controls"))
+        v2.addWidget(QtWidgets.QLabel("Info"))
         self.help = QtWidgets.QTextEdit()
         self.help.setReadOnly(True)
-        self.help.setFixedHeight(210)
+        self.help.setFixedHeight(120)
         self.help.setStyleSheet("QTextEdit{background:#202225;border:1px solid #3a3c40;}")
         self.help.setText(help_text)
-        v.addWidget(self.help)
+        v2.addWidget(self.help)
 
-        v.addStretch(1)
+        v2.addStretch(1)
 
     def _dec_scale(self):
         self.scale_box.setValue(max(self.scale_box.minimum(), self.scale_box.value() - 0.05))
@@ -167,6 +185,11 @@ class Panel(QtWidgets.QWidget):
             self.cmb.blockSignals(True)
             self.cmb.setCurrentIndex(i)
             self.cmb.blockSignals(False)
+
+    def setBindLabel(self, action: str, text: str):
+        lbl = self.kb_value_labels.get(action)
+        if lbl is not None:
+            lbl.setText(str(text))
 
     def setHelpText(self, txt: str):
         self.help.setText(txt)

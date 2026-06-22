@@ -11,12 +11,12 @@ from .constants import (
     DEFAULT_HIDDEN_POSSIBLE_XP,
     VK_TAB,
     VK_H,
+    VK_O,
     VK_BT,
     VK1,
     VK2,
     VK3,
     VK4,
-    VK_DELETE,
 )
 from .paths import CONFIG_PATH, load_json, save_json
 
@@ -43,7 +43,6 @@ def default_keybinds():
     Each action is a dict:
       vk: int virtual key code
       ctrl alt shift: optional booleans for modifier gated binds
-    Only hide_hovered uses modifiers by default.
     """
     return {
         "toggle_master": {"vk": VK_BT},
@@ -53,7 +52,7 @@ def default_keybinds():
         "map_2": {"vk": VK2},
         "map_3": {"vk": VK3},
         "map_4": {"vk": VK4},
-        "hide_hovered": {"vk": VK_DELETE, "ctrl": True, "alt": True, "shift": True},
+        "detect_map": {"vk": VK_O},
     }
 
 
