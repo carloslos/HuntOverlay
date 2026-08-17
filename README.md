@@ -1,17 +1,21 @@
-Changes made:
-- When alt+tabbing or control+tabbing, the tab will be ignored and will not open the overlay
-- Program will start minimized to system tray
-- Always open overlay on the main monitor
-- Map detection
+# Hunt Map Overlay by sKhaled 
 
-Original ReadMe:
-
-# Hunt Map Overlay by sKhaled
-
-A lightweight, real time Windows overlay for Hunt: Showdown that displays map POIs directly on screen.  
-Designed to be click through, configurable, and persistent, with all data stored locally and no game file modification.
+A lightweight, real-time Windows overlay for Hunt: Showdown that displays map POIs directly on screen.  
+Designed to be click-through, configurable, and persistent, with all data stored locally and no game file modification. 
 
 ---
+
+## Security Notice
+
+The only official repository for Hunt Map Overlay by sKhaled is:
+
+https://github.com/uzpj/HuntOverlay-by-sKhaled
+
+Official builds are distributed only through the Releases section of this repository.
+
+If you downloaded this program from another repository or website, it may contain modified or unsafe code. Always verify the source before running any executable.
+
+If you encounter another repository distributing this project with external downloads or modified binaries, treat it as untrusted unless verified.
 
 ## Disclaimer
 
@@ -96,8 +100,13 @@ Hide overlay
 1 2 3 4  
 Switch maps if enabled in the control panel
 
-O  
-Auto-detect the map currently on screen and switch to it
+Ctrl + Alt + Shift + Delete  
+Hide the POI currently under the mouse
+
+This is a soft hide.  
+It only hides the POI for the category it was hidden from.  
+It does not delete data from JSON files.  
+Hidden state is saved in configuration.
 
 
 ## Control Panel
@@ -109,7 +118,7 @@ The control panel allows you to:
 - Switch maps manually
 - Enable numeric map switching
 - Adjust global POI size scale
-- Change keybinds (shown next to each action)
+- View hotkey instructions
 
 The panel stays on top and does not interfere with gameplay.
 
@@ -146,7 +155,7 @@ pip install pyside6
 
 Run:
 
-python main.py
+python HuntOverlay.py
 
 ---
 
@@ -154,7 +163,7 @@ python main.py
 
 To build a single file Windows executable:
 
-py -m PyInstaller --noconfirm --onefile --windowed --name HuntOverlay --icon myicon.ico --add-data "data.json;." --add-data "poiData.json;." --add-data "myicon.ico;." --add-data "maps;maps" main.py
+py -m PyInstaller --noconfirm --onefile --windowed --name HuntOverlay --icon myicon.ico --add-data "data.json;." --add-data "poiData.json;." --add-data "myicon.ico;." --add-data "maps;maps" HuntOverlay.py
 
 The output will be located in:
 

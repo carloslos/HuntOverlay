@@ -1,44 +1,11 @@
-HuntOverlay.spec
-dist/HuntOverlay.exe
-build/HuntOverlay/xref-HuntOverlay.html
-build/HuntOverlay/warn-HuntOverlay.txt
-build/HuntOverlay/PYZ-00.toc
-build/HuntOverlay/PYZ-00.pyz
-build/HuntOverlay/PKG-00.toc
-build/HuntOverlay/localpycs/struct.pyc
-build/HuntOverlay/localpycs/pyimod04_pywin32.pyc
-build/HuntOverlay/localpycs/pyimod03_ctypes.pyc
-build/HuntOverlay/localpycs/pyimod02_importers.pyc
-build/HuntOverlay/localpycs/pyimod01_archive.pyc
-build/HuntOverlay/HuntOverlay.pkg
-build/HuntOverlay/base_library.zip
-build/HuntOverlay/Analysis-00.toc
-build/HuntOverlay/EXE-00.toc
-build args.txt
 
-# Byte-compiled / optimized files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Distribution / packaging
-build/
-dist/
-*.egg-info/
-.eggs/
-
-# PyInstaller
-*.spec
-
-# Virtual environments
-.venv/
-venv/
-env/
-
-# IDE / editor
-.vscode/
 .idea/
 
-# OS
-.DS_Store
-Thumbs.db
+# Python
+__pycache__/
+*.py[cod]
+
+# PyInstaller
+build/
+dist/
+*.spec
